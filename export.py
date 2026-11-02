@@ -235,14 +235,20 @@ def check(token, guild):
     by_id = {c["id"]: c for c in channels}
     excluded = id_list("EXCLUDED_CHANNELS")
     sample = None
+    print("Categories (an id in EXCLUDED_CHANNELS excludes all its channels):")
+    for c in channels:
+        if c["type"] == CATEGORY:
+            print(f"  {c['id']}  {c['name']}")
+    print("Channels (OK = readable, no = no access, -- = excluded):")
     for c in channels:
         if c["type"] not in MESSAGE_TYPES | FORUM_TYPES:
             continue
         if is_excluded(c["id"], by_id, excluded):
-            print(f"  --  #{c['name']} (excluded)")
+            print(f"  --  {c['id']}  #{c['name']} (excluded)")
             continue
         msgs = get(f"/channels/{c['id']}/messages?limit=5", token) if c["type"] in MESSAGE_TYPES else []
-        print(f"  {'OK ' if msgs is not None else 'no '} #{c['name']}")
+        category = (by_id.get(c.get("parent_id")) or {}).get("name", "")
+        print(f"  {'OK ' if msgs is not None else 'no '} {c['id']}  #{c['name']}  [{category}]")
         if sample is None:
             sample = next((m for m in msgs or [] if m["type"] == 0 and not m["author"].get("bot")), None)
     if sample and sample.get("content"):
@@ -362,16 +368,6 @@ def build(token=None, guild=None):
             c = by_id.get(c.get("parent_id"))
         return c["name"] if c else ""
 
-    # channels.csv: thread names are dropped (they often contain a member's name)
-    rows = []
-    for c in channels:
-        if c["type"] == CATEGORY or is_excluded(c["id"], by_id, excluded_channels):
-            continue
-        thread = c["type"] in THREAD_TYPES
-        rows.append([public_id(c), "" if thread else c["name"], TYPE_NAMES.get(c["type"], str(c["type"])),
-                     category_of(c), c.get("parent_id") if thread else ""])
-    write_csv(out / "channels.csv", ["channel", "name", "type", "category", "parent_channel"], rows)
-
     # messages.csv
     messages, seen = [], set()
     for f in sorted((cache / "messages").glob("*.jsonl")):
@@ -386,6 +382,20 @@ def build(token=None, guild=None):
             m["_channel"] = c
             m["_dt"] = parse_ts(m["ts"])
             messages.append(m)
+
+    # channels.csv: only channels that appear in the export, so that the names of
+    # channels the bot cannot read (or that are excluded) never leave the server.
+    # Thread names are dropped (they often contain a member's name).
+    used = {m["_channel"]["id"] for m in messages}
+    used |= {by_id[i].get("parent_id") for i in list(used) if by_id[i]["type"] in THREAD_TYPES}
+    rows = []
+    for c in channels:
+        if c["id"] not in used:
+            continue
+        thread = c["type"] in THREAD_TYPES
+        rows.append([public_id(c), "" if thread else c["name"], TYPE_NAMES.get(c["type"], str(c["type"])),
+                     category_of(c), c.get("parent_id") if thread else ""])
+    write_csv(out / "channels.csv", ["channel", "name", "type", "category", "parent_channel"], rows)
 
     # rank = position of the message in its author's history (exact order, before rounding)
     messages.sort(key=lambda m: (m["_dt"], int(m["id"])))

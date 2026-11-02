@@ -116,7 +116,7 @@ class ExportTest(unittest.TestCase):
         self.assertEqual(len(self.messages), 5)  # 4 in #bienvenue + 1 in thread, #modo excluded
         self.assertFalse(any("/channels/31/" in c for c in calls))
         channels = read_csv(self.out / "channels.csv")
-        self.assertEqual({c["name"] for c in channels}, {"bienvenue", "vocal", ""})
+        self.assertEqual({c["name"] for c in channels}, {"bienvenue", ""})  # no #modo, no empty #vocal
 
     def test_no_archived_threads_call_on_voice(self):
         self.assertFalse(any(c.startswith("/channels/21/threads") for c in calls))

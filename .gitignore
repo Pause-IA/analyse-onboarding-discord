@@ -1,3 +1,5 @@
 .env
+cache/
+out/
 data/
 __pycache__/

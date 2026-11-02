@@ -43,6 +43,7 @@ TYPE_NAMES = {0: "text", 2: "voice", 5: "announcement", 10: "thread", 11: "threa
               12: "private_thread", 15: "forum", 16: "media"}
 USER_MESSAGE_TYPES = {0, 19}  # default message, reply (used for `rank`)
 REPLY = 19
+HOUR = "%Y-%m-%dT%H:00Z"  # timestamps in the deliverable are rounded down to the hour
 DELAY_BUCKETS = [(15 * 60, "<15min"), (3600, "15min-1h"), (6 * 3600, "1h-6h"),
                  (24 * 3600, "6h-24h")]
 
@@ -403,7 +404,7 @@ def build(token=None, guild=None):
             delay = delay_bucket((m["_dt"] - snowflake_time(m["reply_to"])).total_seconds())
         rows.append([
             pseudo_msg(m["id"]),
-            m["_dt"].strftime("%Y-%m-%dT%H:00Z"),
+            m["_dt"].strftime(HOUR),
             public_id(c),
             c.get("parent_id") if thread else "",
             m["type"],
@@ -447,10 +448,10 @@ def build(token=None, guild=None):
         rows = []
         for m in members:
             labels = sorted({l for l in map(role_label, m["roles"]) if l})
-            joined = parse_ts(m["joined_at"]).date().isoformat() if m.get("joined_at") else ""
+            joined = parse_ts(m["joined_at"]).strftime(HOUR) if m.get("joined_at") else ""
             rows.append([m["id"], joined, ";".join(labels)])
         rows.sort()
-        write_csv(out / f"members_{day}.csv", ["author", "joined_day", "roles"], rows)
+        write_csv(out / f"members_{day}.csv", ["author", "joined_hour_utc", "roles"], rows)
 
     print(f"{len(messages)} messages, {len(snapshots)} member snapshot(s) → {out}")
 

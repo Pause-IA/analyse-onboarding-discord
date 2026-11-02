@@ -15,7 +15,7 @@ Python standard, aucune dépendance. Lancé à la main par l'équipe tech, pas d
 - **Jamais le texte des messages.** Le bot n'a pas l'option *Message Content Intent* : Discord ne lui transmet pas le texte, ni les pièces jointes.
 - **Membres** : chaque membre devient un code stable `u_xxxxxxxxxxxx` = HMAC-SHA256(`PSEUDO_SALT`, id Discord). Le même membre garde le même code d'un export à l'autre. Sans le sel, impossible de savoir qui est derrière. Aucun pseudo ni nom n'est écrit.
 - **Messages** : leur id Discord est remplacé par un code `m_…`, pour qu'on ne puisse pas ouvrir le message sur Discord et voir son auteur. Même chose pour les fils (`t_…`), dont le nom est retiré, car il contient souvent le nom d'un membre.
-- **Heures arrondies à l'heure**. Le rang du message dans l'historique du membre (`rank`) et le délai de réponse (`reply_delay`) sont calculés avant l'arrondi.
+- **Heures arrondies à l'heure**, pour les messages comme pour la date d'arrivée. Le rang du message dans l'historique du membre (`rank`) et le délai de réponse (`reply_delay`) sont calculés avant l'arrondi.
 - **Rôles rares regroupés** en `autre` : un rôle porté par moins de `ROLE_MIN_MEMBERS` personnes (« Président »…) désignerait quelqu'un. Les rôles de `ROLES_ALWAYS_KEEP` sont toujours gardés. Les rôles de bots sont retirés.
 - **Mentions** : seulement leur nombre, pas qui est mentionné.
 - **Droit d'opposition** : les membres listés dans `EXCLUDED_USER_IDS` sont retirés du cache et du livrable, y compris rétroactivement.
@@ -46,7 +46,7 @@ Limite : un membre actif dans un salon calme reste reconnaissable par quelqu'un 
 
 `channels.csv` : salon (id ou code de fil), nom (vide pour les fils), type, catégorie, salon parent.
 
-`members_AAAA-MM-JJ.csv` : une photo des membres présents à chaque lancement (`author`, `joined_day` = date d'arrivée au jour près, `roles` séparés par `;`). Comparer deux photos successives montre **les départs** (un code qui disparaît) et **les changements de rôle**, à la précision de l'intervalle entre deux lancements. Cet historique commence au premier lancement.
+`members_AAAA-MM-JJ.csv` : une photo des membres présents à chaque lancement (`author`, `joined_hour_utc` = heure d'arrivée UTC arrondie à l'heure, `roles` séparés par `;`). Comparer deux photos successives montre **les départs** (un code qui disparaît) et **les changements de rôle**, à la précision de l'intervalle entre deux lancements. Cet historique commence au premier lancement.
 
 ## 1. Créer le bot (~5 min)
 

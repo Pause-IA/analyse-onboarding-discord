@@ -147,7 +147,7 @@ class ExportTest(unittest.TestCase):
         members = {m["author"]: m for m in read_csv(snaps[0])}
         self.assertEqual(len(members), 3)  # bot and excluded member removed
         m101 = members[export.pseudo("101")]
-        self.assertEqual(m101["joined_day"], "2023-11-14")
+        self.assertEqual(m101["joined_hour_utc"], "2023-11-14T21:00Z")
         self.assertEqual(m101["roles"], "autre;bénévole")  # rare role grouped, bot role dropped
         self.assertEqual(members[export.pseudo("102")]["roles"], "Groupe Lyon;bénévole")
 

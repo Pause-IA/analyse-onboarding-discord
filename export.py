@@ -351,9 +351,11 @@ def build(token=None, guild=None):
     cache, out = cache_dir(), out_dir()
     if not (cache / "channels.json").exists():
         sys.exit(f"No cache in {cache}: run `python3 export.py fetch` first.")
-    if out.exists():
-        shutil.rmtree(out)
-    out.mkdir(parents=True)
+    # Empty the folder instead of deleting it: with Docker, /out is a mount point
+    # and cannot be removed.
+    out.mkdir(parents=True, exist_ok=True)
+    for f in out.iterdir():
+        shutil.rmtree(f) if f.is_dir() else f.unlink()
 
     skip = excluded_users()
     excluded_channels = id_list("EXCLUDED_CHANNELS")

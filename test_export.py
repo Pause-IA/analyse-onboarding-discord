@@ -166,6 +166,16 @@ class ExportTest(unittest.TestCase):
         authors = {m["author"] for m in read_csv(self.out / "messages.csv")}
         self.assertNotIn(export.pseudo("102"), authors)
 
+    def test_build_keeps_out_folder(self):
+        # with Docker, out/ is a mount point: build must empty it, not delete it
+        stale = self.out / "old.csv"
+        stale.write_text("x")
+        inode = self.out.stat().st_ino
+        with mock.patch.object(export.shutil, "rmtree", side_effect=OSError("read-only")):
+            export.build()
+        self.assertEqual(self.out.stat().st_ino, inode)
+        self.assertFalse(stale.exists())
+
     def test_load_env_parsing(self):
         with tempfile.TemporaryDirectory() as d:
             Path(d, ".env").write_text(
